@@ -2,8 +2,9 @@ name: Bale News Bot
 
 on:
   schedule:
-    - cron: '0 * * * *'   # هر ساعت
-  workflow_dispatch:
+    # ✅ هر ۳ روز یک‌بار در ساعت ۹ صبح به وقت ایران (۵:۳۰ UTC)
+    - cron: '30 5 */3 * *'
+  workflow_dispatch:   # اجرای دستی
 
 jobs:
   run-bot:
