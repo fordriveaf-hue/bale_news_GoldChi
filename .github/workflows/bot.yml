@@ -1,0 +1,38 @@
+name: Bale News Bot
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # هر ساعت
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Bot
+        env:
+          BALE_BOT_TOKEN: ${{ secrets.BALE_BOT_TOKEN }}
+          BALE_CHANNEL_ID: "5107422630"
+        run: python bot.py
+
+      - name: Commit sent_hashes.json
+        run: |
+          git config user.name "BaleBot"
+          git config user.email "bot@github.com"
+          git add sent_hashes.json || true
+          git diff --staged --quiet || git commit -m "به‌روزرسانی هش‌ها"
+          git push || true
