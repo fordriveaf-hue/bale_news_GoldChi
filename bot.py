@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ربات خبری بله — بدون کتابخانه خارجی (فقط requests)
-شامل: برتینا، پرشین خودرو، مهر، ایرسا، ایمنا، ایکنا
+ربات خبری بله — هر ۳ روز یک‌بار اجرا
+بدون لینک کامل اخبار، همراه با هشتگ
 """
 
 import json
@@ -137,7 +137,6 @@ def fetch_rss(url: str) -> list:
 # ═══════════════════════════════════════════════════════
 
 def search_bertina(query: str) -> list:
-    """جستجو در موتور برتینا و استخراج نتایج"""
     results = []
     try:
         search_url = f"https://search.bertina.ir/search?q={quote(query)}"
@@ -150,8 +149,6 @@ def search_bertina(query: str) -> list:
         resp.encoding = "utf-8"
         html = resp.text
 
-        # استخراج نتایج با الگوی ساده (لینک + عنوان)
-        # برتینا معمولاً نتایج را در <a> با href و متن نمایش می‌دهد
         pattern = re.compile(
             r'<a[^>]+href="(https?://[^"]+)"[^>]*>(.*?)</a>',
             re.DOTALL
@@ -176,41 +173,76 @@ def search_bertina(query: str) -> list:
 
 
 # ═══════════════════════════════════════════════════════
-#  قالب‌بندی
+#  قالب‌بندی (بدون لینک + با هشتگ)
 # ═══════════════════════════════════════════════════════
 
 def format_news(item: dict, fmt: int = None) -> str:
+    """قالب‌بندی خبر عمومی بدون لینک، همراه با هشتگ"""
     if fmt is None:
         fmt = random.randint(1, 5)
-    t, s, l = item["title"], item.get("summary", ""), item.get("link", "")
+    t = item["title"]
+    s = item.get("summary", "")
     now = datetime.now().strftime("%Y/%m/%d %H:%M")
 
+    hashtags = "#اخبار #خبری #بله_نیوز"
+
     formats = {
-        1: f"📰 *{t}*\n\n{s}\n\n🔗 [مشاهده خبر]({l})",
-        2: f"🔹 {t}\n\n{s}\n\n📎 {l}",
-        3: f"🗞 *{t}*\n━━━━━━━━━━━━━━━\n{s}\n📅 {now}\n🔗 {l}",
-        4: f"📢 *خبر فوری*\n\n▫️ {t}\n\n{s}\n\n[ادامه مطلب]({l})",
-        5: f"⭐ *{t}*\n\n> {s}\n\n🌐 {l}",
+        1: f"📰 *{t}*\n\n{s}\n\n{hashtags}",
+        2: f"🔹 {t}\n\n{s}\n\n{hashtags}",
+        3: f"🗞 *{t}*\n━━━━━━━━━━━━━━━\n{s}\n📅 {now}\n\n{hashtags}",
+        4: f"📢 *خبر فوری*\n\n▫️ {t}\n\n{s}\n\n#خبر_فوری #اخبار",
+        5: f"⭐ *{t}*\n\n> {s}\n\n{hashtags}",
     }
     return formats.get(fmt, formats[1])
 
 
 def format_economic(item: dict) -> str:
+    """قالب پیش‌بینی اقتصادی بدون لینک"""
+    t = item["title"]
+    s = item.get("summary", "")
+    hashtags = "#اقتصاد #پیش‌بینی_اقتصادی #تحلیل_بازار #تورم #بورس"
+
     templates = [
-        f"📊 *پیش‌بینی اقتصادی*\n\n{item['title']}\n\n{item.get('summary','')}\n\n🔗 {item.get('link','')}",
-        f"📈 *تحلیل اقتصادی*\n\n▫️ {item['title']}\n\n{item.get('summary','')}\n\n[مطالعه کامل]({item.get('link','')})",
-        f"💹 *گزارش اقتصادی*\n\n{item['title']}\n{item.get('summary','')}\n\n🔗 {item.get('link','')}",
+        f"📊 *پیش‌بینی اقتصادی*\n\n{t}\n\n{s}\n\n{hashtags}",
+        f"📈 *تحلیل اقتصادی*\n\n▫️ {t}\n\n{s}\n\n{hashtags}",
+        f"💹 *گزارش اقتصادی*\n\n{t}\n{s}\n\n{hashtags}",
     ]
     return random.choice(templates)
 
 
 def format_car(item: dict) -> str:
+    """قالب اطلاعیه خودرو بدون لینک"""
+    t = item["title"]
+    s = item.get("summary", "")
+    hashtags = "#خودرو #فروش_خودرو #ایران_خودرو #سایپا #طرح_فروش"
+
     templates = [
-        f"🚗 *اطلاعیه فروش خودرو*\n\n{item['title']}\n\n{item.get('summary','')}\n\n🔗 {item.get('link','')}",
-        f"🏎 *آخرین شرایط فروش*\n\n▫️ {item['title']}\n\n{item.get('summary','')}",
-        f"📋 *ثبت‌نام خودرو*\n\n{item['title']}\n{item.get('summary','')}\n\n[جزئیات]({item.get('link','')})",
+        f"🚗 *اطلاعیه فروش خودرو*\n\n{t}\n\n{s}\n\n{hashtags}",
+        f"🏎 *آخرین شرایط فروش*\n\n▫️ {t}\n\n{s}\n\n{hashtags}",
+        f"📋 *ثبت‌نام خودرو*\n\n{t}\n{s}\n\n{hashtags}",
     ]
     return random.choice(templates)
+
+
+def format_registration_links() -> str:
+    """پیام لینک‌های رایج ثبت‌نام خودرو"""
+    return (
+        "🚙 *لینک‌های رایج ثبت‌نام خودرو*\n"
+        "━━━━━━━━━━━━━━━\n\n"
+        "▫️ [ایران خودرو](https://esale.ikco.ir)\n"
+        "سامانه فروش محصولات ایران خودرو\n\n"
+        "▫️ [سایپا](https://saipa.iranecar.com)\n"
+        "سامانه فروش محصولات گروه سایپا\n\n"
+        "▫️ [اتونوین](https://atomin.ir)\n"
+        "پلتفرم خرید و فروش خودرو\n\n"
+        "▫️ [کرمان موتور](https://kermanmotor.ir)\n"
+        "فروش محصولات کرمان موتور\n\n"
+        "▫️ [بهمن موتور](https://bahman.ir)\n"
+        "سامانه فروش گروه بهمن\n\n"
+        "▫️ [پارس خودرو](https://parskhodro.ir)\n"
+        "فروش محصولات پارس خودرو\n\n"
+        "#خودرو #ثبت_نام_خودرو #طرح_فروش"
+    )
 
 
 # ═══════════════════════════════════════════════════════
@@ -229,7 +261,7 @@ def main():
     all_items = []
     seen_hashes = {}
 
-    # ۱) دریافت از RSSهای خبری
+    # ۱) RSSهای خبری
     for source_name, url in NEWS_FEEDS.items():
         print(f"\n📡 دریافت از: {source_name}")
         items = fetch_rss(url)
@@ -241,7 +273,7 @@ def main():
                 all_items.append(item)
                 seen_hashes[h] = True
 
-    # ۲) دریافت از RSSهای خودرو
+    # ۲) RSSهای خودرو
     for source_name, url in CAR_FEEDS.items():
         print(f"\n🚗 دریافت از: {source_name}")
         items = fetch_rss(url)
@@ -287,39 +319,34 @@ def main():
 
     count = 0
 
-    for item in normal[:5]:
+    # ✅ کاهش تعداد: عادی ۳، اقتصادی ۲، خودرو ۲
+    for item in normal[:3]:
         print(f"\n📤 ارسال خبر: {item['title'][:50]}...")
         if send_message(format_news(item)):
             sent[item["hash"]] = datetime.now().isoformat()
             count += 1
             time.sleep(2)
 
-    for item in econ[:3]:
+    for item in econ[:2]:
         print(f"\n📤 ارسال اقتصادی: {item['title'][:50]}...")
         if send_message(format_economic(item)):
             sent[item["hash"]] = datetime.now().isoformat()
             count += 1
             time.sleep(2)
 
-    for item in car[:3]:
+    for item in car[:2]:
         print(f"\n📤 ارسال خودرو: {item['title'][:50]}...")
         if send_message(format_car(item)):
             sent[item["hash"]] = datetime.now().isoformat()
             count += 1
             time.sleep(2)
 
-    # لینک‌های ثبت‌نام (یک‌بار در روز)
-    today_key = f"links_{datetime.now().strftime('%Y%m%d')}"
-    if today_key not in sent:
-        links_text = (
-            "🚙 *لینک‌های ثبت‌نام خودرو*\n\n"
-            "▫️ [سامانه فروش ایران خودرو](https://esale.ikco.ir)\n"
-            "ثبت‌نام طرح‌های فروش محصولات ایران خودرو\n\n"
-            "▫️ [سامانه فروش سایپا](https://saipa.iranecar.com)\n"
-            "ثبت‌نام طرح‌های فروش محصولات گروه سایپا"
-        )
-        if send_message(links_text):
-            sent[today_key] = datetime.now().isoformat()
+    # ✅ لینک‌های رایج ثبت‌نام خودرو (هر ۳ روز یک‌بار با اجرا)
+    links_key = "registration_links_" + datetime.now().strftime('%Y%m%d')
+    if links_key not in sent:
+        print(f"\n📤 ارسال لینک‌های ثبت‌نام خودرو...")
+        if send_message(format_registration_links()):
+            sent[links_key] = datetime.now().isoformat()
             count += 1
 
     save_sent(sent)
